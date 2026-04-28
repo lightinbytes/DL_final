@@ -1,5 +1,6 @@
-data/
 __pycache__/
 *.pth
-*.pt
+checkpoints/
+data/
 .ipynb_checkpoints/
+Vietnamese_Cuisine_v1.0/
