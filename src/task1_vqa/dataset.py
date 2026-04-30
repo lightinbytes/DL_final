@@ -7,82 +7,76 @@ from torchvision import transforms
 from transformers import AutoTokenizer
 
 class VietnameseVQADataset(Dataset):
-    def __init__(self, data_path, img_dir, vocab_path, max_length=20, transform=None):
-        """
-        Khởi tạo Dataset cho mô hình VQA Hướng A.
-        """
-        # Đọc dữ liệu và từ điển nhãn
-        with open(data_path, 'r', encoding='utf-8') as f:
-            self.data = json.load(f)
-        
-        with open(vocab_path, 'r', encoding='utf-8') as f:
-            self.vocab = json.load(f)
-
+    """
+    Dataset chuẩn Sinh chuỗi (Autoregressive) cho VQA Paper-Level.
+    Sử dụng PhoBERT Tokenizer để số hóa cả Câu hỏi và Câu trả lời dài.
+    """
+    def __init__(self, json_path, img_dir, max_q_len=30, max_a_len=50):
         self.img_dir = img_dir
-        self.max_length = max_length
-
-        # Khởi tạo PhoBERT Tokenizer cho tiếng Việt
+        self.max_q_len = max_q_len
+        self.max_a_len = max_a_len
+        
+        # Load HuggingFace Tokenizer (Tiêu chuẩn khoa học cho Tiếng Việt)
+        print("⏳ Đang nạp PhoBERT Tokenizer...")
         self.tokenizer = AutoTokenizer.from_pretrained("vinai/phobert-base")
-
-        # Cấu hình tiền xử lý ảnh (Resize và Normalize theo chuẩn ImageNet)
-        if transform:
-            self.transform = transform
-        else:
-            self.transform = transforms.Compose([
-                transforms.Resize((224, 224)),
-                transforms.ToTensor(),
-                transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-            ])
-
-        # Trải phẳng dữ liệu (1 ảnh : 1 câu hỏi : 1 câu trả lời)
-        self.flat_data = []
-        for item in self.data:
-            # Điều chỉnh đuôi file tùy thuộc vào format gốc (.jpg hoặc .png)
-            img_name = f"{item['image_id']}.jpg" 
-            img_path = os.path.join(img_dir, item.get('category', 'am_thuc'), img_name)
+        
+        with open(json_path, 'r', encoding='utf-8') as f:
+            self.data = json.load(f)
             
-            for qa in item['qa_pairs']:
-                self.flat_data.append({
-                    "image_path": img_path,
-                    "question": qa['question'],
-                    "answer": qa['answer']
-                })
+        # Chuẩn hóa ảnh cho ViT hoặc ResNet
+        self.transform = transforms.Compose([
+            transforms.Resize((224, 224)),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+        ])
 
     def __len__(self):
-        return len(self.flat_data)
+        return len(self.data)
 
     def __getitem__(self, idx):
-        item = self.flat_data[idx]
-
-        # 1. Trích xuất Tensor Ảnh
+        item = self.data[idx]
+        
+        # 1. Xử lý Ảnh
+        img_name = item['image'] if 'image' in item else item.get('image_path', '')
+        # Xử lý đường dẫn động
+        img_name = os.path.basename(img_name) 
+        img_path = os.path.join(self.img_dir, img_name)
+        
         try:
-            image = Image.open(item['image_path']).convert('RGB')
-            img_tensor = self.transform(image)
-        except Exception:
-            # Trả về ma trận 0 nếu file ảnh bị lỗi
-            img_tensor = torch.zeros((3, 224, 224))
-
-        # 2. Trích xuất Tensor Câu Hỏi (Đã padding)
+            image = Image.open(img_path).convert('RGB')
+            image = self.transform(image)
+        except Exception as e:
+            # Fallback tensor đen nếu lỗi ảnh
+            image = torch.zeros((3, 224, 224))
+            
+        # 2. Xử lý Câu hỏi (Source)
+        question_text = item['question']
         encoded_q = self.tokenizer(
-            item['question'],
+            question_text,
+            max_length=self.max_q_len,
             padding='max_length',
-            max_length=self.max_length,
             truncation=True,
-            return_tensors="pt"
+            return_tensors='pt'
         )
-        question_tensor = encoded_q['input_ids'].squeeze(0)
+        q_ids = encoded_q['input_ids'].squeeze(0)
+        q_mask = encoded_q['attention_mask'].squeeze(0) # Rất quan trọng cho Transformer
+        
+        # 3. Xử lý Câu trả lời (Target - Sinh chuỗi)
+        # Sử dụng detailed_explanation nếu có để thực hiện Rationales Expansion
+        answer_text = item.get('detailed_explanation', item['answer'])
+        
+        encoded_a = self.tokenizer(
+            answer_text,
+            max_length=self.max_a_len,
+            padding='max_length',
+            truncation=True,
+            return_tensors='pt'
+        )
+        a_ids = encoded_a['input_ids'].squeeze(0)
+        a_mask = encoded_a['attention_mask'].squeeze(0)
+        
+        return image, q_ids, q_mask, a_ids, a_mask
 
-        # 3. Trích xuất Tensor Nhãn (Chuyển chuỗi Text thành ID nguyên)
-        ans_text = item['answer'].strip().lower()
-        # Mặc định gán nhãn 0 nếu từ khóa không tồn tại trong từ điển
-        label_id = self.vocab.get(ans_text, 0)
-        label_tensor = torch.tensor(label_id, dtype=torch.long)
-
-        return img_tensor, question_tensor, label_tensor
-
-# Hàm tiện ích để nạp dữ liệu thẳng vào mô hình
-def get_dataloader(data_path, img_dir, vocab_path, batch_size=32, shuffle=True):
-    dataset = VietnameseVQADataset(data_path, img_dir, vocab_path)
-    # Lưu ý: Trên Windows để num_workers=0 để tránh lỗi đa luồng, dùng trên Colab có thể đặt là 2
-    loader = DataLoader(dataset, batch_size=batch_size, shuffle=shuffle, num_workers=0)
-    return loader
+def get_dataloader(json_path, img_dir, batch_size=16, shuffle=True):
+    dataset = VietnameseVQADataset(json_path, img_dir)
+    return DataLoader(dataset, batch_size=batch_size, shuffle=shuffle, num_workers=2)
