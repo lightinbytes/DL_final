@@ -61,13 +61,10 @@ Hệ thống cho phép người dùng đặt câu hỏi về nội dung của m�
 ---
 
 ### Cách chạy:
-```
-cách chạy:
-- Chạy train_A1_A2.ipynb với dataset.py, encoder.py, lstm_dec.py, trans_dec.py, train.py
-- Chạy train_B1_b2.ipynb với metrics.py
-- Chạy demo_video.ipynb với các checkpoint đã được lưu sau khi chạy train_A1_A2.ipynb và train_B1_b2.ipynb
-- Chạy index.html sau đó dán api trong demo_video.ipynb vào để sử dụng.
-```
+* Bước 1: Chạy train_A1_A2.ipynb với dataset.py, encoder.py, lstm_dec.py, trans_dec.py, train.py.
+* Bước 2: Chạy train_B1_b2.ipynb với metrics.py.
+* Bước 3: Chạy demo_video.ipynb với metrics.py, api.py và các checkpoint đã được lưu sau khi chạy train_A1_A2.ipynb và train_B1_b2.ipynb.
+* Bước 4: Chạy index.html sau đó dán api trong demo_video.ipynb vào để sử dụng.
 
 ---
 
