@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VQA Demo — Ẩm thực Việt Nam</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-deep:    #0f0c29;
+      --bg-mid:     #302b63;
+      --bg-dark:    #24243e;
+      --blue:       #64b5f6;
+      --blue-dark:  #1976d2;
+      --purple:     #ce93d8;
+      --purple-dark:#7b1fa2;
+      --blue-soft:  #90caf9;
+      --card-bg:    rgba(255,255,255,0.07);
+      --card-border:rgba(255,255,255,0.12);
+      --text:       #ffffff;
+      --text-muted: rgba(255,255,255,0.6);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: linear-gradient(135deg, var(--bg-deep), var(--bg-mid), var(--bg-dark));
+      min-height: 100vh;
+      color: var(--text);
+      overflow-x: hidden;
+    }
+
+    /* ── Particles background ── */
+    .particles {
+      position: fixed; inset: 0; z-index: 0;
+      pointer-events: none; overflow: hidden;
+    }
+    .particle {
+      position: absolute;
+      border-radius: 50%;
+      opacity: 0.15;
+      animation: float linear infinite;
+    }
+
+    @keyframes float {
+      0%   { transform: translateY(100vh) scale(0); opacity: 0; }
+      10%  { opacity: 0.15; }
+      90%  { opacity: 0.15; }
+      100% { transform: translateY(-10vh) scale(1); opacity: 0; }
+    }
+
+    /* ── Navbar ── */
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 16px 40px;
+      background: rgba(15,12,41,0.7);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--card-border);
+    }
+
+    .logo {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.3rem; font-weight: 800;
+      letter-spacing: 1px;
+    }
+    .logo span { color: var(--blue); }
+
+    .nav-badge {
+      background: linear-gradient(90deg, var(--blue-dark), var(--purple-dark));
+      color: #fff;
+      font-size: 0.78rem; font-weight: 600;
+      padding: 4px 14px; border-radius: 20px;
+      letter-spacing: 0.5px;
+    }
+
+    /* ── Hero ── */
+    .hero {
+      position: relative; z-index: 1;
+      text-align: center;
+      padding: 72px 20px 48px;
+    }
+
+    .hero-label {
+      display: inline-block;
+      background: rgba(100,181,246,0.15);
+      border: 1px solid rgba(100,181,246,0.3);
+      color: var(--blue);
+      font-size: 0.82rem; font-weight: 600;
+      padding: 5px 16px; border-radius: 20px;
+      margin-bottom: 20px; letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .hero h1 {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(2rem, 5vw, 3.2rem);
+      font-weight: 800; line-height: 1.2;
+      margin-bottom: 14px;
+    }
+
+    .hero h1 .grad {
+      background: linear-gradient(90deg, var(--blue), var(--purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero p {
+      color: var(--text-muted);
+      font-size: 1.05rem; max-width: 500px;
+      margin: 0 auto; line-height: 1.7;
+    }
+
+    /* ── Main layout ── */
+    .main {
+      position: relative; z-index: 1;
+      max-width: 1000px; margin: 0 auto;
+      padding: 0 20px 80px;
+    }
+
+    /* ── Upload card ── */
+    .upload-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 36px;
+      margin-bottom: 28px;
+    }
+
+    .upload-card h2 {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.1rem; font-weight: 700;
+      color: var(--blue-soft);
+      border-left: 3px solid var(--blue-dark);
+      padding-left: 12px;
+      margin-bottom: 24px;
+    }
+
+    /* Drop zone */
+    .drop-zone {
+      border: 2px dashed rgba(100,181,246,0.35);
+      border-radius: 14px;
+      padding: 40px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.25s;
+      background: rgba(100,181,246,0.04);
+      position: relative;
+      margin-bottom: 20px;
+    }
+    .drop-zone:hover, .drop-zone.drag-over {
+      border-color: var(--blue);
+      background: rgba(100,181,246,0.09);
+    }
+    .drop-zone input[type="file"] {
+      position: absolute; inset: 0; opacity: 0; cursor: pointer;
+    }
+    .drop-icon { font-size: 2.8rem; margin-bottom: 10px; }
+    .drop-text { color: var(--text-muted); font-size: 0.95rem; }
+    .drop-text strong { color: var(--blue); }
+
+    /* Preview */
+    #preview-wrap {
+      display: none;
+      margin-bottom: 20px;
+      border-radius: 14px;
+      overflow: hidden;
+      max-height: 280px;
+      border: 1px solid var(--card-border);
+    }
+    #preview-wrap img {
+      width: 100%; height: 280px;
+      object-fit: cover; display: block;
+    }
+
+    /* Question input */
+    .input-group { position: relative; margin-bottom: 20px; }
+    .input-group label {
+      display: block; font-size: 0.88rem;
+      color: var(--text-muted); margin-bottom: 8px;
+    }
+    .input-group textarea {
+      width: 100%;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 14px 16px;
+      color: #fff;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.97rem;
+      resize: vertical; min-height: 80px;
+      transition: border-color 0.2s;
+      outline: none;
+    }
+    .input-group textarea:focus {
+      border-color: var(--blue);
+      background: rgba(100,181,246,0.06);
+    }
+    .input-group textarea::placeholder { color: rgba(255,255,255,0.3); }
+
+    /* Submit button */
+    .btn-submit {
+      width: 100%;
+      padding: 15px;
+      background: linear-gradient(90deg, var(--blue-dark), var(--purple-dark));
+      border: none; border-radius: 12px;
+      color: #fff; font-family: 'Syne', sans-serif;
+      font-size: 1rem; font-weight: 700;
+      cursor: pointer;
+      transition: all 0.25s;
+      box-shadow: 0 4px 20px rgba(100,181,246,0.25);
+      letter-spacing: 0.5px;
+    }
+    .btn-submit:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(100,181,246,0.4);
+    }
+    .btn-submit:disabled {
+      opacity: 0.5; cursor: not-allowed; transform: none;
+    }
+
+    /* ── API URL input ── */
+    .api-config {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 16px 20px;
+      margin-bottom: 28px;
+      display: flex; align-items: center; gap: 12px;
+      flex-wrap: wrap;
+    }
+    .api-config label {
+      font-size: 0.85rem; color: var(--text-muted);
+      white-space: nowrap;
+    }
+    .api-config input {
+      flex: 1; min-width: 200px;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 8px 12px;
+      color: #fff;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem;
+      outline: none;
+    }
+    .api-config input:focus { border-color: var(--blue); }
+    .api-status {
+      font-size: 0.8rem; padding: 4px 12px;
+      border-radius: 20px; font-weight: 600;
+    }
+    .api-status.ok  { background: rgba(100,220,100,0.15); color: #81c784; }
+    .api-status.err { background: rgba(220,100,100,0.15); color: #ef9a9a; }
+
+    /* ── Results ── */
+    .results-section { display: none; }
+    .results-section h2 {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.1rem; font-weight: 700;
+      color: var(--blue-soft);
+      border-left: 3px solid var(--blue-dark);
+      padding-left: 12px;
+      margin-bottom: 20px;
+    }
+
+    .results-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+    }
+
+    .result-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 24px;
+      transition: transform 0.25s, border-color 0.25s;
+      position: relative; overflow: hidden;
+    }
+    .result-card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0;
+      height: 3px;
+    }
+    .result-card.a1::before { background: linear-gradient(90deg, #42a5f5, #1976d2); }
+    .result-card.a2::before { background: linear-gradient(90deg, #7e57c2, #4527a0); }
+    .result-card.b1::before { background: linear-gradient(90deg, #26c6da, #00838f); }
+    .result-card.b2::before { background: linear-gradient(90deg, #ec407a, #880e4f); }
+
+    .result-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(255,255,255,0.25);
+    }
+
+    .model-badge {
+      display: inline-block;
+      font-family: 'Syne', sans-serif;
+      font-size: 0.78rem; font-weight: 700;
+      padding: 3px 10px; border-radius: 6px;
+      margin-bottom: 8px; letter-spacing: 1px;
+    }
+    .a1 .model-badge { background: rgba(66,165,245,0.2); color: #90caf9; }
+    .a2 .model-badge { background: rgba(126,87,194,0.2); color: #ce93d8; }
+    .b1 .model-badge { background: rgba(38,198,218,0.2); color: #80deea; }
+    .b2 .model-badge { background: rgba(236,64,122,0.2); color: #f48fb1; }
+
+    .model-name {
+      font-size: 0.82rem; color: var(--text-muted);
+      margin-bottom: 14px; line-height: 1.4;
+    }
+
+    .answer-text {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.05rem; font-weight: 600;
+      color: #fff; line-height: 1.5;
+      min-height: 40px;
+    }
+
+    /* Loading spinner */
+    .spinner {
+      display: inline-block;
+      width: 18px; height: 18px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      vertical-align: middle; margin-right: 8px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Skeleton */
+    .skeleton {
+      background: linear-gradient(90deg,
+        rgba(255,255,255,0.06) 25%,
+        rgba(255,255,255,0.12) 50%,
+        rgba(255,255,255,0.06) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.4s infinite;
+      border-radius: 6px;
+      height: 20px; width: 80%;
+    }
+    @keyframes shimmer {
+      0%   { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    /* ── Question echo ── */
+    .question-echo {
+      background: rgba(100,181,246,0.08);
+      border: 1px solid rgba(100,181,246,0.2);
+      border-radius: 12px;
+      padding: 14px 18px;
+      margin-bottom: 20px;
+      font-size: 0.95rem;
+      color: var(--blue-soft);
+    }
+    .question-echo strong { color: var(--blue); }
+
+    /* ── Error toast ── */
+    .toast {
+      position: fixed; bottom: 30px; right: 30px; z-index: 999;
+      background: rgba(239,83,80,0.95);
+      color: #fff; padding: 14px 20px;
+      border-radius: 12px; font-size: 0.9rem;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+      display: none; max-width: 320px;
+      animation: slideIn 0.3s ease;
+    }
+    @keyframes slideIn {
+      from { transform: translateX(120%); }
+      to   { transform: translateX(0); }
+    }
+
+    footer {
+      position: relative; z-index: 1;
+      text-align: center; padding: 24px;
+      color: rgba(255,255,255,0.25); font-size: 0.82rem;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Particles -->
+<div class="particles" id="particles"></div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- Navbar -->
+<nav>
+  <div class="logo">🍜 <span>VQA</span> Demo</div>
+  <div class="nav-badge">Deep Learning · Ẩm thực Việt Nam</div>
+</nav>
+
+<!-- Hero -->
+<div class="hero">
+  <div class="hero-label">🎓 Đồ án cuối kỳ · Học sâu</div>
+  <h1>Hỏi đáp trên Ảnh<br><span class="grad">Ẩm thực Việt Nam</span></h1>
+  <p>Upload ảnh món ăn, đặt câu hỏi bất kỳ — 4 mô hình AI đồng thời trả lời</p>
+</div>
+
+<!-- Main -->
+<div class="main">
+
+  <!-- API Config -->
+  <div class="api-config">
+    <label>🔗 API URL (ngrok):</label>
+    <input type="text" id="api-url"
+           placeholder="https://xxxx.ngrok-free.app"
+           value="http://localhost:8000">
+    <button onclick="checkHealth()"
+            style="padding:8px 16px;border-radius:8px;border:none;
+                   background:rgba(100,181,246,0.2);color:var(--blue);
+                   cursor:pointer;font-size:0.85rem;font-weight:600;">
+      Kiểm tra
+    </button>
+    <span class="api-status" id="api-status" style="display:none"></span>
+  </div>
+
+  <!-- Upload card -->
+  <div class="upload-card">
+    <h2>📤 Nhập dữ liệu</h2>
+
+    <!-- Drop zone -->
+    <div class="drop-zone" id="drop-zone">
+      <input type="file" id="img-input" accept="image/*">
+      <div class="drop-icon">🖼️</div>
+      <div class="drop-text">
+        <strong>Click để chọn ảnh</strong> hoặc kéo thả vào đây<br>
+        <small style="color:rgba(255,255,255,0.3);font-size:0.82rem;">JPG, PNG, WEBP · Tối đa 10MB</small>
+      </div>
+    </div>
+
+    <!-- Preview -->
+    <div id="preview-wrap">
+      <img id="preview-img" src="" alt="Preview">
+    </div>
+
+    <!-- Question -->
+    <div class="input-group">
+      <label>💬 Câu hỏi về món ăn</label>
+      <textarea id="question"
+                placeholder="Ví dụ: Đây là món gì? · Món này có nguồn gốc từ đâu? · Nguyên liệu chính là gì?"></textarea>
+    </div>
+
+    <!-- Submit -->
+    <button class="btn-submit" id="btn-submit" onclick="submitQuery()">
+      ✨ Hỏi 4 mô hình AI
+    </button>
+  </div>
+
+  <!-- Results -->
+  <div class="results-section" id="results-section">
+    <h2>🤖 Câu trả lời từ 4 mô hình</h2>
+
+    <div class="question-echo" id="question-echo"></div>
+
+    <div class="results-grid">
+      <div class="result-card a1" id="card-a1">
+        <div class="model-badge">A1</div>
+        <div class="model-name">ResNet-50 + LSTM Decoder</div>
+        <div class="answer-text" id="ans-a1"><div class="skeleton"></div></div>
+      </div>
+      <div class="result-card a2" id="card-a2">
+        <div class="model-badge">A2</div>
+        <div class="model-name">CLIP ViT + Transformer Decoder</div>
+        <div class="answer-text" id="ans-a2"><div class="skeleton"></div></div>
+      </div>
+      <div class="result-card b1" id="card-b1">
+        <div class="model-badge">B1</div>
+        <div class="model-name">PaliGemma · Zero-shot</div>
+        <div class="answer-text" id="ans-b1"><div class="skeleton"></div></div>
+      </div>
+      <div class="result-card b2" id="card-b2">
+        <div class="model-badge">B2</div>
+        <div class="model-name">PaliGemma + LoRA Fine-tune</div>
+        <div class="answer-text" id="ans-b2"><div class="skeleton"></div></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<footer>Vietnamese Food VQA · Quang &amp; Bảo · Deep Learning 2025</footer>
+
+<script>
+  // ── Particles ──────────────────────────────────────────
+  const pWrap = document.getElementById('particles');
+  for (let i = 0; i < 18; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    const size = Math.random() * 80 + 20;
+    const colors = ['#64b5f6','#ce93d8','#1976d2','#7b1fa2','#90caf9'];
+    p.style.cssText = `
+      width:${size}px; height:${size}px;
+      left:${Math.random()*100}%;
+      background:${colors[Math.floor(Math.random()*colors.length)]};
+      animation-duration:${Math.random()*20+15}s;
+      animation-delay:-${Math.random()*20}s;
+    `;
+    pWrap.appendChild(p);
+  }
+
+  // ── Image upload & preview ─────────────────────────────
+  const imgInput   = document.getElementById('img-input');
+  const dropZone   = document.getElementById('drop-zone');
+  const previewWrap= document.getElementById('preview-wrap');
+  const previewImg = document.getElementById('preview-img');
+  let   selectedFile = null;
+
+  imgInput.addEventListener('change', e => {
+    if (e.target.files[0]) loadPreview(e.target.files[0]);
+  });
+
+  dropZone.addEventListener('dragover', e => {
+    e.preventDefault(); dropZone.classList.add('drag-over');
+  });
+  dropZone.addEventListener('dragleave', () => {
+    dropZone.classList.remove('drag-over');
+  });
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault(); dropZone.classList.remove('drag-over');
+    if (e.dataTransfer.files[0]) loadPreview(e.dataTransfer.files[0]);
+  });
+
+  function loadPreview(file) {
+    selectedFile = file;
+    const url = URL.createObjectURL(file);
+    previewImg.src = url;
+    previewWrap.style.display = 'block';
+    dropZone.style.display = 'none';
+  }
+
+  // ── API health check ───────────────────────────────────
+  async function checkHealth() {
+    const url    = document.getElementById('api-url').value.trim();
+    const status = document.getElementById('api-status');
+    status.style.display = 'inline-block';
+    status.className = 'api-status';
+    status.textContent = '⏳ Đang kiểm tra...';
+    try {
+      const res = await fetch(`${url}/health`, {
+          signal: AbortSignal.timeout(5000),
+          headers: {
+              "ngrok-skip-browser-warning": "true"
+          }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const loaded = Object.values(data).filter(Boolean).length;
+        status.className = 'api-status ok';
+        status.textContent = `✅ Kết nối OK · ${loaded}/4 model`;
+      } else {
+        throw new Error('Server lỗi');
+      }
+    } catch {
+      status.className = 'api-status err';
+      status.textContent = '❌ Không kết nối được';
+    }
+  }
+
+  // ── Toast ──────────────────────────────────────────────
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.style.display = 'block';
+    setTimeout(() => { t.style.display = 'none'; }, 4000);
+  }
+
+  // ── Submit ─────────────────────────────────────────────
+  async function submitQuery() {
+    const apiUrl   = document.getElementById('api-url').value.trim();
+    const question = document.getElementById('question').value.trim();
+    const btn      = document.getElementById('btn-submit');
+
+    if (!selectedFile)  { showToast('⚠ Vui lòng chọn ảnh!'); return; }
+    if (!question)       { showToast('⚠ Vui lòng nhập câu hỏi!'); return; }
+    if (!apiUrl)         { showToast('⚠ Vui lòng nhập API URL!'); return; }
+
+    // Show results section với skeleton
+    const section = document.getElementById('results-section');
+    section.style.display = 'block';
+    section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    document.getElementById('question-echo').innerHTML =
+      `<strong>Câu hỏi:</strong> ${question}`;
+
+    ['a1','a2','b1','b2'].forEach(m => {
+      document.getElementById(`ans-${m}`).innerHTML = '<div class="skeleton"></div>';
+    });
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Đang xử lý...';
+
+    try {
+      const formData = new FormData();
+      formData.append('image', selectedFile);
+      formData.append('question', question);
+
+      const res = await fetch(`${apiUrl}/predict`, {
+          method: 'POST',
+          body: formData,
+          headers: {
+              "ngrok-skip-browser-warning": "true"
+          }
+      });
+
+      if (!res.ok) throw new Error(`Server trả về ${res.status}`);
+
+      const data = await res.json();
+      const answers = data.answers;
+
+      // Hiển thị kết quả với animation stagger
+      const models = ['a1','a2','b1','b2'];
+      models.forEach((m, i) => {
+        setTimeout(() => {
+          const el = document.getElementById(`ans-${m}`);
+          el.style.opacity = '0';
+          el.textContent = answers[m] || '(không có câu trả lời)';
+          el.style.transition = 'opacity 0.4s';
+          requestAnimationFrame(() => { el.style.opacity = '1'; });
+        }, i * 150);
+      });
+
+    } catch (err) {
+      showToast(`❌ Lỗi: ${err.message}`);
+      ['a1','a2','b1','b2'].forEach(m => {
+        document.getElementById(`ans-${m}`).textContent = '⚠ Lỗi kết nối';
+      });
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '✨ Hỏi 4 mô hình AI';
+    }
+  }
+
+  // Enter để submit
+  document.getElementById('question').addEventListener('keydown', e => {
+    if (e.key === 'Enter' && e.ctrlKey) submitQuery();
+  });
+</script>
+</body>
+</html>
