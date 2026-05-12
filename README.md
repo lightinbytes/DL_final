@@ -58,7 +58,7 @@ Hệ thống cho phép người dùng đặt câu hỏi về nội dung của m�
 * **Scheduler**: **Cosine Annealing Learning Rate** điều chỉnh tốc độ học giảm dần theo hàm Cosine, giúp mô hình đạt điểm hội tụ tối ưu ở giai đoạn cuối.
 * **Đánh giá đa chiều**: Hệ thống đánh giá toàn diện gồm: **VQA Accuracy**, **BLEU (1-4)**, **ROUGE-L**, **METEOR** và đặc biệt là **BERTScore** (dựa trên PhoBERT) để đo lường độ chính xác về mặt ngữ nghĩa thực tế.
 
----.
+---
 
 ### Cách chạy:
 ```bash
