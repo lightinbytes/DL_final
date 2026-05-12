@@ -8,18 +8,22 @@ Dự án cuối kỳ môn **Học Sâu (Deep Learning)** tập trung vào xử l
 
 ```text
 DL_final/
-├── Task1/                      # Bài 1: Visual Question Answering (VQA)
-│   ├── dataset.py              # Xử lý dữ liệu và DataLoader
-│   ├── encoder.py              # Image & Text Encoders (ResNet50 + PhoBERT)
-│   ├── lstm_dec.py             # Kiến trúc A1: LSTM Decoder
-│   ├── trans_dec.py            # Kiến trúc A2: Transformer Decoder
-│   ├── train.py                # Script huấn luyện chính cho Task 1
-│   ├── metrics.py              # Các hàm đánh giá (Recall@K, Accuracy, v.v.)
-│   └── notebooks/              # Các file demo và thực nghiệm
-├── Task2/                      # Bài 2: Food Recommendation (CBIR)
+├── Task1/                       # Bài 1: Visual Question Answering (VQA)
+│   ├── dataset.py               # Định nghĩa VietnameseVQADataset và DataLoader (Dùng PhoBERT)
+│   ├── encoder.py               # Image Encoder (ResNet50) và Text Encoder (LSTM)
+│   ├── lstm_dec.py              # Kiến trúc A1: Kết hợp ResNet50 + LSTM Decoder
+│   ├── trans_dec.py             # Kiến trúc A2: Kết hợp ResNet50 + Transformer Decoder
+│   ├── train.py                 # Script huấn luyện chính (CLI) cho mô hình A1 và A2
+│   ├── train_A1_A2.ipynb        # Quy trình train/eval chi tiết cho mô hình A1 & A2
+│   ├── train_B1_B2.ipynb        # Thực nghiệm Zero-shot và Fine-tune với PaliGemma
+│   ├── metrics.py               # Đánh giá: VQA Accuracy, BLEU, ROUGE, METEOR, BERTScore
+│   ├── demo_video.ipynb         # Demo từng kiến trúc (A1, A2, B1, B2) và sử dụng LLM Judge để đánh giá
+│   ├── api.py                   # Backend FastAPI phục vụ việc dự đoán (Predict) và Demo
+│   └── index.html               # Giao diện Web người dùng (Frontend) để tương tác trực quan
+├── Task2/                       # Bài 2: Food Recommendation (CBIR)
 │   └── Task2_DeepLearning.ipynb # Toàn bộ pipeline Metric Learning & Evaluation
-├── requirements.txt            # Danh sách thư viện cần thiết
-└── README.md                   # Hướng dẫn sử dụng
+├── requirements.txt             # Danh sách thư viện cần thiết
+└── README.md                    # Hướng dẫn sử dụng
 ```
 
 ---
