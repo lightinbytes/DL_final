@@ -61,8 +61,12 @@ Hệ thống cho phép người dùng đặt câu hỏi về nội dung của m�
 ---
 
 ### Cách chạy:
-```bash
-python Task1/train.py --model a2 --data_dir data/splits --img_root data/images --batch_size 16 --epochs 15
+```
+cách chạy:
+- Chạy train_A1_A2.ipynb với dataset.py, encoder.py, lstm_dec.py, trans_dec.py, train.py
+- Chạy train_B1_b2.ipynb với metrics.py
+- Chạy demo_video.ipynb với các checkpoint đã được lưu sau khi chạy train_A1_A2.ipynb và train_B1_b2.ipynb
+- Chạy index.html sau đó dán api trong demo_video.ipynb vào để sử dụng.
 ```
 
 ---
