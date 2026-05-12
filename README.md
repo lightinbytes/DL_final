@@ -4,7 +4,7 @@ Dự án cuối kỳ môn **Học Sâu (Deep Learning)** tập trung vào xử l
 
 ---
 
-## 📁 Cấu trúc dự án
+## Cấu trúc dự án
 
 ```text
 DL_final/
@@ -83,7 +83,7 @@ Hệ thống gợi ý các món ăn tương đồng dựa trên vector đặc tr
 
 ---
 
-## 🛠 Cài đặt
+## Cài đặt
 
 Yêu cầu Python 3.8+ và GPU (khuyến khích).
 
@@ -93,7 +93,7 @@ pip install -r requirements.txt
 
 ---
 
-## 📊 Dataset
+## Dataset
 
 Dự án sử dụng bộ dữ liệu **Vietnamese Cuisine v1.0** bao gồm hàng ngàn hình ảnh món ăn Việt Nam đi kèm với các cặp câu hỏi-trả lời mô tả chi tiết.
 
